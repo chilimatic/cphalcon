@@ -36,6 +36,7 @@ use Phalcon\Mvc\Model\ResultsetInterface;
 use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Di\InjectionAwareInterface;
 use Phalcon\Mvc\Model\RelationInterface;
+use Phalcon\Mvc\Model\TransactionInterface;
 
 /**
  * Phalcon\Mvc\Model\Query
@@ -104,6 +105,13 @@ class Query implements QueryInterface, InjectionAwareInterface
 	protected _enableImplicitJoins;
 
 	protected _sharedLock;
+
+    /**
+     * TransactionInterface so that the query can wrap a transaction
+     * around batch updates and intermediate selects within the transaction.
+     * however if a model got a transaction set inside it will use the local transaction instead of this one
+     */
+	protected _transaction;
 
 	static protected _irPhqlCache;
 
@@ -2543,15 +2551,27 @@ class Query implements QueryInterface, InjectionAwareInterface
 					this->_modelsInstances[modelName] = model;
 			}
 
-			// Get database connection
-			if method_exists(model, "selectReadConnection") {
-				// use selectReadConnection() if implemented in extended Model class
-				let connection = model->selectReadConnection(intermediate, bindParams, bindTypes);
-				if typeof connection != "object" {
-					throw new Exception("'selectReadConnection' didn't return a valid connection");
-				}
+            // if there is a transaction set to be wrapped around all queries
+            if this->_transaction == "null" {
+                // Get database connection
+                if method_exists(model, "selectReadConnection") {
+                    // use selectReadConnection() if implemented in extended Model class
+                    let connection = model->selectReadConnection(intermediate, bindParams, bindTypes);
+                    if typeof connection != "object" {
+                        throw new Exception("'selectReadConnection' didn't return a valid connection");
+                    }
+                } else {
+                    let connection = model->getReadConnection();
+                }
 			} else {
-				let connection = model->getReadConnection();
+			    // the model transaction dominates the outer construct
+			    if method_exists(model, "getTransaction") {
+			        let connection = model->getTransaction();
+			    }
+                // if there is no specific model transaction wrap it in the outer transaction
+			    if connection == "null" {
+                    connection = this->_transaction->getConnection();
+			    }
 			}
 
 			// More than one type of connection is not allowed
@@ -3613,5 +3633,22 @@ class Query implements QueryInterface, InjectionAwareInterface
 	public static function clean()
 	{
 		let self::_irPhqlCache = [];
+	}
+
+    /**
+     * allows to wrap a transaction around all queries
+     */
+	public function setTransaction(<TransactionInterface> transaction) -> <Query>
+	{
+	    let this->_transaction = transaction;
+	    return this;
+	}
+
+    /**
+     * gets the appropriate transaction if it exists
+     */
+	public function getTransaction()
+	{
+	    return this->_transaction;
 	}
 }
