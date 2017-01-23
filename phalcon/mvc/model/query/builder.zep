@@ -62,6 +62,10 @@ use Phalcon\Mvc\Model\Query\BuilderInterface;
  */
 class Builder implements BuilderInterface, InjectionAwareInterface
 {
+	/**
+	 * @var TransactionInterface | null
+	 */
+	protected _transaction { get, set };
 
 	protected _dependencyInjector;
 
@@ -107,7 +111,7 @@ class Builder implements BuilderInterface, InjectionAwareInterface
 			singleConditionArray, limit, offset, fromClause,
 			mergedConditions, mergedParams, mergedTypes,
 			singleCondition, singleParams, singleTypes,
-			with, distinct, bind, bindTypes;
+			with, distinct, bind, bindTypes, transaction;
 
 		if typeof params == "array" {
 
@@ -269,6 +273,14 @@ class Builder implements BuilderInterface, InjectionAwareInterface
 			if fetch sharedLock, params["shared_lock"] {
 				let this->_sharedLock = sharedLock;
 			}
+
+			/**
+			 * Assign transaction
+			 */
+			if fetch transaction, params["transaction"] {
+				let this->_transaction = transaction;
+			}
+
 		} else {
 			if typeof params == "string" && params !== "" {
 				let this->_conditions = params;
@@ -1382,6 +1394,11 @@ class Builder implements BuilderInterface, InjectionAwareInterface
 
 		if typeof this->_sharedLock === "boolean" {
 			query->setSharedLock(this->_sharedLock);
+		}
+
+		// set transaction if exists
+		if typeof this->_transaction == "object" {
+			query->setTransaction(this->_transaction);
 		}
 
 		return query;

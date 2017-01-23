@@ -781,7 +781,7 @@ abstract class Model implements EntityInterface, ModelInterface, ResultInterface
 	 * );
 	 *
 	 * foreach ($robots as $robot) {
-	 *	 echo $robot->name, "\n";
+	 *     echo $robot->name, "\n";
 	 * }
 	 *
 	 * // Get first 100 virtual robots ordered by name
@@ -794,7 +794,7 @@ abstract class Model implements EntityInterface, ModelInterface, ResultInterface
 	 * );
 	 *
 	 * foreach ($robots as $robot) {
-	 *	 echo $robot->name, "\n";
+	 *     echo $robot->name, "\n";
 	 * }
 	 *
 	 * // encapsulate find it into an running transaction esp. useful for application unit-tests
@@ -805,7 +805,7 @@ abstract class Model implements EntityInterface, ModelInterface, ResultInterface
 	 * $newRobot->setTransaction($myTransaction);
 	 * $newRobot->save(['name' => 'test', 'type' => 'mechanical', 'year' => 1944]);
 	 *
-	 * $resultInsideTransaction = Robot::find(['name' => 'test'], $myTransaction);
+	 * $resultInsideTransaction = Robot::find(['name' => 'test', 'transaction' => $myTransaction]);
 	 * $resultOutsideTransaction = Robot::find(['name' => 'test']);
 	 *
 	 * foreach ($setInsideTransaction as $robot) {
@@ -831,9 +831,9 @@ abstract class Model implements EntityInterface, ModelInterface, ResultInterface
 	 * $newRobot->save(['name' => 'test', 'type' => 'mechanical', 'year' => 1944]);
 	 *
 	 * // this transaction will not find the robot.
-	 * $resultOutsideExplicitTransaction = Robot::find(['name' => 'test'], $myTransaction2);
+	 * $resultOutsideExplicitTransaction = Robot::find(['name' => 'test', 'transaction' => $myTransaction2]);
 	 * // this transaction will find the robot
-	 * $resultInsideExplicitTransaction = Robot::find(['name' => 'test'], $myTransaction1);
+	 * $resultInsideExplicitTransaction = Robot::find(['name' => 'test', 'transaction' => $myTransaction1]);
 	 *
 	 * // is using the transaction1 and will find the robot
 	 * $resultInsideImplicitTransaction = $robot::find(['name' => 'test']);
@@ -842,7 +842,7 @@ abstract class Model implements EntityInterface, ModelInterface, ResultInterface
 	 *
 	 * </code>
 	 */
-	public static function find(var parameters = null, <TransactionInterface> transaction = null) -> <ResultsetInterface>
+	public static function find(var parameters = null) -> <ResultsetInterface>
 	{
 		var params, builder, query, bindParams, bindTypes, cache, resultset, hydration, dependencyInjector, manager;
 
@@ -865,10 +865,6 @@ abstract class Model implements EntityInterface, ModelInterface, ResultInterface
 		builder->from(get_called_class());
 
 		let query = builder->getQuery();
-
-		if transaction != "null" {
-			query->setTransaction(transaction);
-		}
 
 		/**
 		 * Check for bind parameters
