@@ -8,6 +8,8 @@ use Phalcon\Mvc\Model\Manager;
 use Phalcon\Test\Module\UnitTest;
 use Phalcon\Mvc\Model\Metadata\Memory;
 use Phalcon\Mvc\Model\Resultset\Simple;
+use Phalcon\Test\Proxy\Mvc\Model\Transaction\Manager as TransactionManager;
+
 
 /**
  * \Phalcon\Test\Unit\Mvc\Model\CriteriaTest
@@ -17,6 +19,7 @@ use Phalcon\Mvc\Model\Resultset\Simple;
  * @link      http://www.phalconphp.com
  * @author    Andres Gutierrez <andres@phalconphp.com>
  * @author    Serghei Iakovlev <serghei@phalconphp.com>
+ * @author    Jakob Oberhummer <cphalcon@chilimatic.com>
  * @package   Phalcon\Test\Unit\Mvc\Model
  *
  * The contents of this file are subject to the New BSD License that is
@@ -90,6 +93,28 @@ class CriteriaTest extends UnitTest
                 expect($query->getLimit())->equals($expected);
             },
             ['examples' => $this->limitOffsetProvider()]
+        );
+    }
+
+    /**
+     * Tests Criteria::execute with a transaction passed
+     *
+     * @test
+     * @issue 12409
+     * @author Jakob Oberhummer <cphalcon@chilimatic.com>
+     * @since 2016-11-28
+     */
+    public function criteriaExecuteWithTransaction() {
+        $this->specify(
+            'The Criteria::execute with a transaction passed as parameter does not work as expected',
+            function () {
+                $criteria = Users::query()->inWhere(Users::class . '.id', []);
+                $tm = new TransactionManager();
+                $transaction = $tm->get(true);
+
+                expect($criteria->getWhere())->equals(Users::class . '.id != ' . Users::class . '.id');
+                expect($criteria->execute($transaction))->isInstanceOf(Simple::class);
+            }
         );
     }
 
