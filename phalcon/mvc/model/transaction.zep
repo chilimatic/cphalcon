@@ -78,7 +78,7 @@ class Transaction implements TransactionInterface
 
 	protected _rollbackOnAbort = false;
 
-    protected _throwExceptionOnRollback { get };
+    protected _throwExceptionOnRollBack;
 
 	protected _manager;
 
@@ -161,7 +161,7 @@ class Transaction implements TransactionInterface
 				let this->_rollbackRecord = rollbackRecord;
 			}
 
-		    if this->_throwExceptionOnRollBack != false {
+		    if this->_throwExceptionOnRollback != false {
                 throw new TxFailed(rollbackMessage, this->_rollbackRecord);
 		    }
 		}
@@ -235,5 +235,9 @@ class Transaction implements TransactionInterface
      */
 	public function setThrowExceptionOnRollback(boolean throwExceptionOnRollback) {
 	    let this->_throwExceptionOnRollback = throwExceptionOnRollback;
+	}
+
+	public function getThrowExceptionOnRollback() -> boolean {
+	    return this->_throwExceptionOnRollback;
 	}
 }
