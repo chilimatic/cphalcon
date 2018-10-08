@@ -78,6 +78,8 @@ class Transaction implements TransactionInterface
 
 	protected _rollbackOnAbort = false;
 
+    protected _throwExceptionOnRollback { get };
+
 	protected _manager;
 
 	protected _messages;
@@ -92,6 +94,7 @@ class Transaction implements TransactionInterface
 		var connection;
 
 		let this->_messages = [];
+		let this->_throwExceptionOnRollback = true;
 
 		if service {
 			let connection = dependencyInjector->get(service);
@@ -153,10 +156,14 @@ class Transaction implements TransactionInterface
 			if !rollbackMessage {
 				let rollbackMessage = "Transaction aborted";
 			}
+
 			if typeof rollbackRecord == "object" {
 				let this->_rollbackRecord = rollbackRecord;
 			}
-			throw new TxFailed(rollbackMessage, this->_rollbackRecord);
+
+		    if this->_throwExceptionOnRollBack != false {
+                throw new TxFailed(rollbackMessage, this->_rollbackRecord);
+		    }
 		}
 
 		return true;
@@ -221,5 +228,12 @@ class Transaction implements TransactionInterface
 	public function setRollbackedRecord(<ModelInterface> record)
 	{
 		let this->_rollbackRecord = record;
+	}
+
+    /**
+     * set flag to not throw an exception on rollback
+     */
+	public function setThrowExceptionOnRollback(boolean throwExceptionOnRollback) {
+	    let this->_throwExceptionOnRollback = throwExceptionOnRollback;
 	}
 }
